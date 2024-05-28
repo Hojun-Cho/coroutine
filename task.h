@@ -1,0 +1,13 @@
+#ifndef _TASK_H_
+#define _TASK_H_
+
+typedef struct Task Task;
+typedef struct Tasklist Tasklist;
+
+struct Tasklist
+{
+  Task* head;
+  Task* tail;
+};
+
+#endif
