@@ -10,4 +10,17 @@ struct Tasklist
   Task* tail;
 };
 
+typedef struct QLock
+{
+  Task* owner;
+  Tasklist* wwaiting;
+} QLock;
+
+void
+qlock(QLock*);
+void
+canqlock(QLock*);
+void
+qunlock(QLock*);
+
 #endif
