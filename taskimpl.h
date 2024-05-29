@@ -1,4 +1,5 @@
 #include "task.h"
+#include <signal.h>
 #include <stdlib.h>
 #include <ucontext.h>
 
@@ -22,7 +23,7 @@ struct Task
   Task* prev;
   Task* allnext;
   Task* allprev;
-  ucontext_t context;
+  ucontext_t uc;
   uvlong alarmtime;
   uint id;
   uchar* stk;
@@ -32,3 +33,11 @@ struct Task
   void* startarg;
   void* udata;
 };
+
+int
+taskcreate(void (*fn)(void*), void* arg, uint stk);
+void
+taskready(Task* t);
+
+void
+addtask(Tasklist* l, Task* t);
