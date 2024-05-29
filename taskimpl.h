@@ -28,10 +28,11 @@ struct Task
   uint id;
   uchar* stk;
   uint stksize;
+  int exiting;
+  int alltaskslot;
   int ready;
   void (*startfn)(void*);
   void* startarg;
-  void* udata;
 };
 
 int
@@ -39,7 +40,7 @@ taskcreate(void (*fn)(void*), void* arg, uint stk);
 void
 taskready(Task* t);
 void
-taskexit(Task* t);
+taskexit(int val);
 
 void
 addtask(Tasklist* l, Task* t);

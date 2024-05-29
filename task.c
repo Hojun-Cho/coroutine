@@ -3,6 +3,7 @@
 int taskcount;
 int taskidgen;
 int tasknswitch;
+int taskexitval;
 
 Task* taskrunning;
 ucontext_t taskschedcontext;
@@ -25,7 +26,7 @@ taskstart(uint x, uint y)
   z |= (ulong)y;
   t = (Task*)z;
   t->startfn(t->startarg);
-  taskexit(t);
+  taskexit(0);
 }
 
 static Task*
@@ -77,6 +78,7 @@ taskcreate(void (*fn)(void*), void* arg, uint stk)
       exit(1);
     }
   }
+  t->alltaskslot = nalltask;
   alltask[nalltask++] = t;
   taskready(t);
   return id;
@@ -87,11 +89,6 @@ taskready(Task* t)
 {
   t->ready = 1;
   addtask(&taskrunqueue, t);
-}
-
-void
-taskexit(Task* t)
-{
 }
 
 void
@@ -107,8 +104,30 @@ taskyield(void)
   int n;
 
   n = tasknswitch;
+  taskready(taskrunning);
   taskswitch();
   return tasknswitch - n - 1;
+}
+
+void
+taskexit(int val)
+{
+  taskexitval = val;
+  taskrunning->exiting = 1;
+  taskswitch();
+}
+
+void
+deltask(Tasklist* l, Task* t)
+{
+  if (t->prev)
+    t->prev->next = t->next;
+  else
+    l->head = t->next;
+  if (t->next)
+    t->next->prev = t->prev;
+  else
+    l->tail = t->prev;
 }
 
 void
@@ -142,6 +161,36 @@ assertstack(uint n)
   if ((uchar*)&t <= (uchar*)t->stk || (uchar*)&t - (uchar*)t->stk < 256 + n) {
     /* satck over flow */
     exit(1);
+  }
+}
+
+static void
+taskscheduler(void)
+{
+  int i;
+  Task* t;
+
+  for (;;) {
+    if (taskcount == 0)
+      exit(taskexitval);
+    t = taskrunqueue.head;
+    if (t == nil) {
+      /* nothing to do */
+      exit(1);
+    }
+    deltask(&taskrunqueue, t); /* delete from runqueue */
+    t->ready = 0;
+    taskrunning = t;
+    tasknswitch++;
+    contextswitch(&taskschedcontext, &t->uc);
+    taskrunning = nil; /* ready for next task */
+    if (t->exiting) {
+      taskcount--;
+      i = t->alltaskslot;
+      alltask[i] = alltask[--nalltask];
+      alltask[i]->alltaskslot = i;
+      free(t);
+    }
   }
 }
 
