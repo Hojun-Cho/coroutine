@@ -2,13 +2,34 @@
 
 int taskcount;
 int taskidgen;
+int tasknswitch;
 
+Task* taskrunning;
+ucontext_t taskschedcontext;
 Tasklist taskrunqueue;
 Task** alltask;
 int nalltask;
 
+static void
+contextswitch(ucontext_t* from, ucontext_t* to);
+static void
+assertstack(uint n);
+
+static void
+taskstart(uint x, uint y)
+{
+  Task* t;
+  ulong z;
+
+  z = ((ulong)x) << 32;
+  z |= (ulong)y;
+  t = (Task*)z;
+  t->startfn(t->startarg);
+  taskexit(t);
+}
+
 static Task*
-taskalloc(void (*taskstart)(void*), void* arg, uint stk)
+taskalloc(void (*fn)(void*), void* arg, uint stk)
 {
   Task* t;
   sigset_t zero;
@@ -22,7 +43,7 @@ taskalloc(void (*taskstart)(void*), void* arg, uint stk)
     .stk = (uchar*)(&t[1]),
     .stksize = stk,
     .id = ++taskidgen,
-    .startfn = taskstart,
+    .startfn = fn,
     .startarg = arg,
     0,
   };
@@ -51,6 +72,10 @@ taskcreate(void (*fn)(void*), void* arg, uint stk)
   taskcount++;
   id = t->id;
   if (nalltask % 64 == 0) {
+    alltask = realloc(alltask, (nalltask + 64) * sizeof(alltask[0]));
+    if (alltask == 0) {
+      exit(1);
+    }
   }
   alltask[nalltask++] = t;
   taskready(t);
@@ -65,6 +90,28 @@ taskready(Task* t)
 }
 
 void
+taskexit(Task* t)
+{
+}
+
+void
+taskswitch(void)
+{
+  assertstack(0);
+  contextswitch(&taskrunning->uc, &taskschedcontext);
+}
+
+int
+taskyield(void)
+{
+  int n;
+
+  n = tasknswitch;
+  taskswitch();
+  return tasknswitch - n - 1;
+}
+
+void
 addtask(Tasklist* l, Task* t)
 {
   if (l->tail) {
@@ -76,4 +123,39 @@ addtask(Tasklist* l, Task* t)
   }
   l->tail = t;
   t->next = nil;
+}
+
+static void
+contextswitch(ucontext_t* from, ucontext_t* to)
+{
+  if (swapcontext(from, to)) {
+    exit(1);
+  }
+}
+
+static void
+assertstack(uint n)
+{
+  Task* t;
+
+  t = taskrunning;
+  if ((uchar*)&t <= (uchar*)t->stk || (uchar*)&t - (uchar*)t->stk < 256 + n) {
+    /* satck over flow */
+    exit(1);
+  }
+}
+
+#include <stdio.h>
+void
+run(void* x)
+{
+  int* y = x;
+  printf("%d\n", y[0]);
+}
+
+int
+main()
+{
+  int x = 10;
+  taskcreate(run, &x, 10000);
 }
