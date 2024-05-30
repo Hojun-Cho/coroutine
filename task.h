@@ -27,6 +27,24 @@ int
 canqlock(QLock*);
 void
 qunlock(QLock*);
+QLock*
+newqlock();
+
+typedef struct Rendez Rendez;
+struct Rendez
+{
+  QLock* l;
+  Tasklist waiting;
+};
+
+void
+tasksleep(Rendez*);
+int
+taskwakeup(Rendez*);
+int
+taskwakeupall(Rendez*);
+Rendez*
+newrendez(QLock* l);
 
 extern Task* taskrunning;
 extern int taskcount;

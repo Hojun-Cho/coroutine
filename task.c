@@ -73,8 +73,8 @@ taskalloc(void (*fn)(void*), void* arg, uint stk)
   if (getcontext(&t->uc)) {
     exit(1);
   }
-  t->uc.uc_stack.ss_sp = t->stk;
-  t->uc.uc_stack.ss_size = t->stksize;
+  t->uc.uc_stack.ss_sp = t->stk + 8;
+  t->uc.uc_stack.ss_size = t->stksize - 64;
 
   z = (ulong)t;
   y = z;
