@@ -14,7 +14,7 @@ int nalltask;
 
 static void
 contextswitch(ucontext_t* from, ucontext_t* to);
-static void
+void
 assertstack(uint n);
 
 static void
@@ -139,6 +139,12 @@ taskexit(int val)
 }
 
 void
+taskexitall(int val)
+{
+  exit(val);
+}
+
+void
 deltask(Tasklist* l, Task* t)
 {
   if (t->prev)
@@ -168,12 +174,13 @@ addtask(Tasklist* l, Task* t)
 static void
 contextswitch(ucontext_t* from, ucontext_t* to)
 {
-  if (swapcontext(from, to)) {
+  if (swapcontext(from, to) < 0) {
+    printf("swapcontext is fail\n");
     exit(1);
   }
 }
 
-static void
+void
 assertstack(uint n)
 {
   Task* t;

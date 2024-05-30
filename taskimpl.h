@@ -1,4 +1,5 @@
 #include "task.h"
+#include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,14 +37,6 @@ struct Task
   void* startarg;
 };
 
-int
-taskcreate(void (*fn)(void*), void* arg, uint stk);
-void
-taskready(Task* t);
-void
-taskexit(int val);
-void
-taskswitch(void);
 void
 deltask(Tasklist* l, Task* t);
 
