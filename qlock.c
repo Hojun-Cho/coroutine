@@ -35,7 +35,7 @@ qunlock(QLock* l)
 {
   Task* ready;
 
-  if (l->owner == 0) {
+  if (l->owner == nil) {
     /* TODO: */
     exit(1);
   }
@@ -44,4 +44,17 @@ qunlock(QLock* l)
     deltask(&l->waiting, ready);
     taskready(ready);
   }
+}
+
+QLock*
+newqlock()
+{
+  QLock* l;
+
+  l = malloc(sizeof *l);
+  if (l == nil)
+    exit(1);
+  l->owner = 0;
+  l->waiting = (Tasklist){ 0 };
+  return l;
 }
