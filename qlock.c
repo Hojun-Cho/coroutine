@@ -9,7 +9,7 @@ _qlock(QLock* l, int block)
   }
   if (!block)
     return 0;
-  addtask(l->waiting, taskrunning);
+  addtask(&l->waiting, taskrunning);
   taskswitch(); /* wait until own lock */
   if (l->owner != taskrunning) {
     /* TODO: */
@@ -39,9 +39,9 @@ qunlock(QLock* l)
     /* TODO: */
     exit(1);
   }
-  l->owner = ready = l->waiting->head;
+  l->owner = ready = l->waiting.head;
   if (l->owner != nil) {
-    deltask(l->waiting, ready);
+    deltask(&l->waiting, ready);
     taskready(ready);
   }
 }

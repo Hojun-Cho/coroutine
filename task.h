@@ -13,7 +13,7 @@ struct Tasklist
 typedef struct QLock
 {
   Task* owner;
-  Tasklist* waiting;
+  Tasklist waiting;
 } QLock;
 
 void
