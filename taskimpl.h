@@ -1,6 +1,7 @@
 #include "task.h"
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ucontext.h>
 
 #define nil ((void*)0)
@@ -41,6 +42,10 @@ void
 taskready(Task* t);
 void
 taskexit(int val);
+void
+taskswitch(void);
+void
+deltask(Tasklist* l, Task* t);
 
 void
 addtask(Tasklist* l, Task* t);

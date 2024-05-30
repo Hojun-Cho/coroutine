@@ -1,4 +1,5 @@
 #include "taskimpl.h"
+#include <stdio.h>
 
 int taskcount;
 int taskidgen;
@@ -17,13 +18,33 @@ static void
 assertstack(uint n);
 
 static void
+taskinfo(int s)
+{
+  int i;
+  Task* t;
+  char* extra;
+
+  for (i = 0; i < nalltask; ++i) {
+    t = alltask[i];
+    if (t == taskrunning)
+      extra = " (running)";
+    else if (t->ready)
+      extra = " (ready)";
+    else
+      extra = "";
+    printf("%s\n", extra);
+  }
+}
+
+static void
 taskstart(uint x, uint y)
 {
   Task* t;
   ulong z;
 
-  z = ((ulong)x) << 32;
-  z |= (ulong)y;
+  z = x << 16;
+  z <<= 16;
+  z |= y;
   t = (Task*)z;
   t->startfn(t->startarg);
   taskexit(0);
@@ -46,7 +67,6 @@ taskalloc(void (*fn)(void*), void* arg, uint stk)
     .id = ++taskidgen,
     .startfn = fn,
     .startarg = arg,
-    0,
   };
   sigemptyset(&zero);
   sigprocmask(SIG_BLOCK, &zero, &t->uc.uc_sigmask);
@@ -56,10 +76,11 @@ taskalloc(void (*fn)(void*), void* arg, uint stk)
   t->uc.uc_stack.ss_sp = t->stk;
   t->uc.uc_stack.ss_size = t->stksize;
 
-  z = (ulong)t; /* ffffffff 00000000 */
-  y = z;        /* y = 00000000 */
-  x = z >> 32;  /* x = ffffffff */
-  makecontext(&t->uc, (void (*)())taskstart, 2, y, x);
+  z = (ulong)t;
+  y = z;
+  z >>= 16;
+  x = z >> 16;
+  makecontext(&t->uc, (void (*)())taskstart, 2, x, y);
   return t;
 }
 
@@ -194,17 +215,32 @@ taskscheduler(void)
   }
 }
 
-#include <stdio.h>
-void
-run(void* x)
+static char* argv0;
+static int taskargc;
+static char** taskargv;
+int mainstacksize;
+
+static void
+taskmainstart(void* v)
 {
-  int* y = x;
-  printf("%d\n", y[0]);
+  taskmain(taskargc, taskargv);
 }
 
 int
-main()
+main(int argc, char** argv)
 {
-  int x = 10;
-  taskcreate(run, &x, 10000);
+  struct sigaction sa, osa;
+
+  memset(&sa, 0, sizeof(sigaction));
+  sa.sa_handler = taskinfo;
+  sa.sa_flags = SA_RESTART;
+  sigaction(SIGQUIT, &sa, &osa);
+  /*sigaction(SIGINFO, &sa, &osa);*/
+  argv0 = argv[0];
+  taskargc = argc;
+  taskargv = argv;
+  mainstacksize = 256 * 1024;
+  taskcreate(taskmainstart, nil, mainstacksize);
+  taskscheduler();
+  exit(0);
 }

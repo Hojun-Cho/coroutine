@@ -1,7 +1,7 @@
 #include "taskimpl.h"
 
-void
-_qlock(Qlock* l, int block)
+int
+_qlock(QLock* l, int block)
 {
   if (l->owner == nil) {
     l->owner = taskrunning;
@@ -9,7 +9,7 @@ _qlock(Qlock* l, int block)
   }
   if (!block)
     return 0;
-  addtask(&l->waiting, taskrunning);
+  addtask(l->waiting, taskrunning);
   taskswitch(); /* wait until own lock */
   if (l->owner != taskrunning) {
     /* TODO: */
@@ -19,7 +19,7 @@ _qlock(Qlock* l, int block)
 }
 
 void
-qlock(QLokc* l)
+qlock(QLock* l)
 {
   _qlock(l, 1);
 }
@@ -39,9 +39,9 @@ qunlock(QLock* l)
     /* TODO: */
     exit(1);
   }
-  l->owner = ready = l->wwaiting.head;
+  l->owner = ready = l->waiting->head;
   if (l->owner != nil) {
-    deltask(&l->wwaiting, ready);
+    deltask(l->waiting, ready);
     taskready(ready);
   }
 }

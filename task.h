@@ -13,14 +13,22 @@ struct Tasklist
 typedef struct QLock
 {
   Task* owner;
-  Tasklist* wwaiting;
+  Tasklist* waiting;
 } QLock;
 
 void
-qlock(QLock*);
+taskmain(int argc, char** argv);
+int
+taskyield(void);
+
 void
+qlock(QLock*);
+int
 canqlock(QLock*);
 void
 qunlock(QLock*);
+
+extern Task* taskrunning;
+extern int taskcount;
 
 #endif
