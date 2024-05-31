@@ -1,5 +1,7 @@
+cc = tcc
+
 all :
-	cc *.c -lucontext -g -Wall -Wextra
+	$(cc) jmp.S *.c -ggdb -Wall -Wextra
 
 clean:
 	rm -rf a.out *.o

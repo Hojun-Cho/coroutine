@@ -49,6 +49,8 @@ struct Rendez
   Tasklist waiting;
 };
 
+void*
+taskarg();
 void
 tasksleep(Rendez*);
 int
@@ -119,9 +121,13 @@ chansendp(Channel* c, void* v);
 void*
 chanrecvp(Channel* c);
 int
+channbsend(Channel* c, void* v);
+int
 channbsendp(Channel* c, void* v);
 void*
 channbrecvp(Channel* c);
+int
+channbrecv(Channel* c, void* v);
 int
 chansendul(Channel* c, unsigned long v);
 unsigned long

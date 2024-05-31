@@ -9,6 +9,7 @@ newchan(int elemsize, int bufsize)
   if (c == 0) {
     exit(1);
   }
+	memset(c, 0, sizeof *c + bufsize * elemsize);
   *c = (Channel){
     .elemsize = elemsize,
     .bufsize = bufsize,
@@ -69,7 +70,7 @@ otherop(enum chan_op op)
 static Altarray*
 chanarray(Channel* c, enum chan_op op)
 {
-  switch (op) {
+  switch(op){
     default:
       return nil;
     case CHANSND:
@@ -341,4 +342,16 @@ int
 channbrecvul(Channel* c, ulong v)
 {
   return _chanop(c, CHANRCV, &v, 0);
+}
+
+int
+channbsend(Channel* c, void* v)
+{
+  return _chanop(c, CHANSND, v, 0);
+}
+
+int
+channbrecv(Channel* c, void* v)
+{
+  return _chanop(c, CHANRCV, v, 0);
 }
