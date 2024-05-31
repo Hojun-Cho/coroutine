@@ -1,5 +1,3 @@
-/* Copyright (c) 2005 Russ Cox, MIT; see COPYRIGHT */
-
 #include "task.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,34 +5,27 @@
 
 int quiet;
 int goal;
-int buffer = 0;
+int buffer = 10;
 
 void
-sender(void* arg)
+primetask(void* arg)
 {
-  Channel* c;
+  Channel *c, *nc;
   int p, i;
   c = arg;
 
-  for (int i = 0; i < 10; i++) {
-    printf("send %d %d\n", i, chansendul(c, i));
-  }
-}
-
-void
-reciver(void* arg)
-{
-  Channel* c;
-  int p, i;
-  c = arg;
-
+  p = chanrecvul(c);
+  if (p > goal)
+    taskexitall(0);
+  if (!quiet)
+    printf("%d\n", p);
+  nc = newchan(sizeof(unsigned long), buffer);
+  taskcreate(primetask, nc, 32768);
   for (;;) {
     i = chanrecvul(c);
-    printf("recv %d\n", i);
-    if (i == 9)
-      break;
+    if (i % p)
+      chansendul(nc, i);
   }
-  taskexitall(0);
 }
 
 void
@@ -48,10 +39,22 @@ taskmain(int argc, char** argv)
   else
     goal = 100;
   printf("goal=%d\n", goal);
+
   c = newchan(sizeof(unsigned long), buffer);
-  taskcreate(sender, c, 32768);
-  taskcreate(reciver, c, 32768);
-  for (;;) {
-    taskyield();
+  taskcreate(primetask, c, 32768);
+  for (i = 2;; i++) {
+    chansendul(c, i);
   }
+}
+
+void*
+emalloc(unsigned long n)
+{
+  return calloc(n, 1);
+}
+
+long
+lrand(void)
+{
+  return rand();
 }

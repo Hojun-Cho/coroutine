@@ -88,8 +88,9 @@ static void
 altcopy(Alt* s, Alt* r)
 {
   Channel* c;
+  uchar* cp;
 
-  if (s == nil || r == nil)
+  if (s == nil && r == nil)
     return;
   assert(s != nil); /* sender must not nil */
   c = s->c;
@@ -102,12 +103,23 @@ altcopy(Alt* s, Alt* r)
   assert(r == nil || r->op == CHANRCV); /* reciver */
 
   /* Channel is unbufferd */
-  if (s && c->nbuf == 0) {
+  if (s && r && c->nbuf == 0) {
     amove(r->v, s->v, c->elemsize);
     return;
   }
-  /* TODO : bufferd channel */
-  exit(1);
+  if (r) {
+    /* recive buffred data first */
+    cp = c->buf + c->off * c->elemsize;
+    amove(r->v, cp, c->elemsize);
+    --c->nbuf;
+    if (++c->off == c->bufsize)
+      c->off = 0;
+  }
+  if (s) {
+    cp = c->buf + (c->off + c->nbuf) % c->bufsize * c->elemsize;
+    amove(cp, s->v, c->elemsize);
+    ++c->nbuf;
+  }
 }
 
 static void
