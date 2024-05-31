@@ -342,3 +342,15 @@ channbrecvul(Channel* c, ulong v)
 {
   return _chanop(c, CHANRCV, &v, 0);
 }
+
+int
+channbsend(Channel* c, void* v)
+{
+  return _chanop(c, CHANSND, v, 0);
+}
+
+int
+channbrecv(Channel* c, void* v)
+{
+  return _chanop(c, CHANRCV, v, 0);
+}
