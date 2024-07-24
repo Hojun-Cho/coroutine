@@ -7,13 +7,13 @@ int tasknswitch;
 int taskexitval;
 
 Task* taskrunning;
-ucontext_t taskschedcontext;
+jmp_buf taskschedcontext;
 Tasklist taskrunqueue;
 Task** alltask;
 int nalltask;
 
 static void
-contextswitch(ucontext_t* from, ucontext_t* to);
+contextswitch(jmp_buf from, jmp_buf to);
 void
 assertstack(uint n);
 
@@ -36,31 +36,15 @@ taskinfo(int s)
   }
 }
 
-static void
-taskstart(uint x, uint y)
-{
-  Task* t;
-  ulong z;
-
-  z = x << 16;
-  z <<= 16;
-  z |= y;
-  t = (Task*)z;
-  t->startfn(t->startarg);
-  taskexit(0);
-}
-
 static Task*
 taskalloc(void (*fn)(void*), void* arg, uint stk)
 {
   Task* t;
-  sigset_t zero;
-  uint x, y;
-  ulong z;
 
   if ((t = malloc(sizeof *t + stk)) == nil) {
     exit(1);
   }
+	memset(t, 0, sizeof *t + stk);
   *t = (Task){
     .stk = (uchar*)(&t[1]),
     .stksize = stk,
@@ -68,19 +52,8 @@ taskalloc(void (*fn)(void*), void* arg, uint stk)
     .startfn = fn,
     .startarg = arg,
   };
-  sigemptyset(&zero);
-  sigprocmask(SIG_BLOCK, &zero, &t->uc.uc_sigmask);
-  if (getcontext(&t->uc)) {
-    exit(1);
-  }
-  t->uc.uc_stack.ss_sp = t->stk + 8;
-  t->uc.uc_stack.ss_size = t->stksize - 64;
-
-  z = (ulong)t;
-  y = z;
-  z >>= 16;
-  x = z >> 16;
-  makecontext(&t->uc, (void (*)())taskstart, 2, x, y);
+	t->uc[REG_RSP] = (char*)t->stk + stk - 64;
+  t->uc[REG_RIP] = fn;
   return t;
 }
 
@@ -116,7 +89,7 @@ void
 taskswitch(void)
 {
   assertstack(0);
-  contextswitch(&taskrunning->uc, &taskschedcontext);
+  contextswitch(taskrunning->uc, taskschedcontext);
 }
 
 int
@@ -172,12 +145,15 @@ addtask(Tasklist* l, Task* t)
 }
 
 static void
-contextswitch(ucontext_t* from, ucontext_t* to)
+contextswitch(jmp_buf from, jmp_buf to)
 {
-  if (swapcontext(from, to) < 0) {
-    printf("swapcontext is fail\n");
-    exit(1);
-  }
+	extern int psetjmp(jmp_buf);
+	extern void plongjmp(jmp_buf, int);
+
+	if(psetjmp(from) == 0){
+		plongjmp(to, 1);
+	}
+	return;
 }
 
 void
@@ -186,10 +162,8 @@ assertstack(uint n)
   Task* t;
 
   t = taskrunning;
-  if ((uchar*)&t <= (uchar*)t->stk || (uchar*)&t - (uchar*)t->stk < 256 + n) {
-    /* satck over flow */
+  if((uchar*)&t <= (uchar*)t->stk || (uchar*)&t - (uchar*)t->stk < 256 + n)
     exit(1);
-  }
 }
 
 static void
@@ -198,21 +172,20 @@ taskscheduler(void)
   int i;
   Task* t;
 
-  for (;;) {
+  for(;;){
     if (taskcount == 0)
       exit(taskexitval);
     t = taskrunqueue.head;
-    if (t == nil) {
-      /* nothing to do */
+    if(t == nil){
       exit(1);
     }
     deltask(&taskrunqueue, t); /* delete from runqueue */
     t->ready = 0;
     taskrunning = t;
     tasknswitch++;
-    contextswitch(&taskschedcontext, &t->uc);
+    contextswitch(taskschedcontext, t->uc);
     taskrunning = nil; /* ready for next task */
-    if (t->exiting) {
+    if(t->exiting){
       taskcount--;
       i = t->alltaskslot;
       alltask[i] = alltask[--nalltask];
@@ -227,6 +200,12 @@ static int taskargc;
 static char** taskargv;
 int mainstacksize;
 
+void*
+taskarg()
+{
+	return taskrunning->startarg;
+}
+
 static void
 taskmainstart(void* v)
 {
@@ -236,13 +215,6 @@ taskmainstart(void* v)
 int
 main(int argc, char** argv)
 {
-  struct sigaction sa, osa;
-
-  memset(&sa, 0, sizeof(sigaction));
-  sa.sa_handler = taskinfo;
-  sa.sa_flags = SA_RESTART;
-  sigaction(SIGQUIT, &sa, &osa);
-  /*sigaction(SIGINFO, &sa, &osa);*/
   argv0 = argv[0];
   taskargc = argc;
   taskargv = argv;

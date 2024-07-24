@@ -49,6 +49,8 @@ struct Rendez
   Tasklist waiting;
 };
 
+void*
+taskarg();
 void
 tasksleep(Rendez*);
 int

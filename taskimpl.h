@@ -1,18 +1,23 @@
 #include "task.h"
 #include <assert.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ucontext.h>
 
 #define nil ((void*)0)
 #define nelem(x) (sizeof(x) / sizeof((x)[0]))
 
+typedef void *jmp_buf[10];
 typedef unsigned long ulong;
 typedef unsigned int uint;
 typedef unsigned char uchar;
 typedef unsigned long long uvlong;
 typedef long long vlong;
+
+enum
+{
+	REG_RIP = 7,
+	REG_RSP = 6,
+};
 
 enum
 {
@@ -25,7 +30,7 @@ struct Task
   Task* prev;
   Task* allnext;
   Task* allprev;
-  ucontext_t uc;
+  jmp_buf uc;
   uvlong alarmtime;
   uint id;
   uchar* stk;

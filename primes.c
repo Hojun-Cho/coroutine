@@ -8,12 +8,12 @@ int goal;
 int buffer = 10;
 
 void
-primetask(void* arg)
+primetask()
 {
   Channel *c, *nc;
   int p, i;
-  c = arg;
 
+	c = taskarg();
   p = chanrecvul(c);
   if (p > goal)
     taskexitall(0);
@@ -38,8 +38,7 @@ taskmain(int argc, char** argv)
     goal = atoi(argv[1]);
   else
     goal = 100;
-  printf("goal=%d\n", goal);
-
+  printf("goal = %d\n", goal);
   c = newchan(sizeof(unsigned long), buffer);
   taskcreate(primetask, c, 32768);
   for (i = 2;; i++) {
