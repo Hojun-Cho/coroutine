@@ -1,5 +1,5 @@
+.global _psetjmp
 .global psetjmp
-.type psetjmp,@function
 psetjmp:
 	mov %rbx,(%rdi)         /* rdi is jmp_buf, move registers onto it */
 	mov %rbp,8(%rdi)
@@ -14,8 +14,8 @@ psetjmp:
 	xor %eax,%eax           /* always return 0 */
 	ret
 
+.global _plongjmp
 .global plongjmp
-.type plongjmp,@function
 plongjmp:
 	xor %eax,%eax
 	cmp $1,%esi             /* CF = val ? 0 : 1 */
