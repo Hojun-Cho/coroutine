@@ -35,12 +35,15 @@ struct Task
   uint id;
   uchar* stk;
   uint stksize;
+  int system;
   int exiting;
   int alltaskslot;
   int ready;
   void (*startfn)(void*);
   void* startarg;
 };
+
+extern int taskcount;
 
 void
 deltask(Tasklist* l, Task* t);

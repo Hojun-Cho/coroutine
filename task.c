@@ -210,6 +210,7 @@ static void
 taskmainstart(void* v)
 {
   taskmain(taskargc, taskargv);
+  taskexitall(0);
 }
 
 int
