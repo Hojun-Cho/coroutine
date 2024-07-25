@@ -1,5 +1,5 @@
 #include "task.h"
-#include <stdio.h>
+#include "print.h"
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -18,7 +18,7 @@ primetask()
   if (p > goal)
     taskexitall(0);
   if (!quiet)
-    printf("%d\n", p);
+    print("%d\n", p);
   nc = newchan(sizeof(unsigned long), buffer);
   taskcreate(primetask, nc, 32768);
   for (;;) {
@@ -38,7 +38,7 @@ taskmain(int argc, char** argv)
     goal = atoi(argv[1]);
   else
     goal = 100;
-  printf("goal = %d\n", goal);
+  print("goal = %d\n", goal);
   c = newchan(sizeof(unsigned long), buffer);
   taskcreate(primetask, c, 32768);
   for (i = 2;; i++) {

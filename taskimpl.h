@@ -1,4 +1,5 @@
 #include "task.h"
+#include <errno.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,8 +46,5 @@ struct Task
 
 extern int taskcount;
 
-void
-deltask(Tasklist* l, Task* t);
-
-void
-addtask(Tasklist* l, Task* t);
+void deltask(Tasklist* l, Task* t);
+void addtask(Tasklist* l, Task* t);

@@ -1,10 +1,10 @@
 #include "taskimpl.h"
+#include "print.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -84,7 +84,7 @@ netannounce(char *server,int port)
 	}
 	sa.sin_port = htons(port);
 	if((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
-		perror("socket");
+		fprint(2, "socket:%r\n");
 		return -1;
 	}
 	if(getsockopt(fd, SOL_SOCKET, SO_TYPE, (void*)&n, &sn) != -1){
@@ -92,7 +92,7 @@ netannounce(char *server,int port)
 		setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&n, sizeof n);
 	}
 	if(bind(fd, (struct sockaddr*)&sa, sizeof sa) == -1){
-		perror("bind");
+		fprint(2, "bind:%r\n");
 		close(fd);
 		return -1;
 	}
@@ -113,15 +113,13 @@ netaccept(int fd, char *server, int *port)
 	fdwait(fd, 'r');
 	len = sizeof sa;
 	if((cfd = accept(fd, (void*)&sa, &len)) < 0){
-		perror("accept");
+		fprint(2, "accept:%r\n");
 		return -1;
 	}
-	/*
-	 * need sprint
-	 *if(server){
-	 *    ip = (uchar*)&sa.sin_addr;
-	 *}
-	 */
+	if(server){
+		ip = (uchar*)&sa.sin_addr;
+		snprint(server, 16, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+	}
 	if(port){
 		*port = ntohs(sa.sin_port);
 	}
@@ -143,7 +141,7 @@ netdial(char *server, int port)
 	if(netlookup(server, &ip) < 0)
 		return -1;
 	if((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-		perror("socket");
+		fprint(2, "socket:%r\n");
 		return -1;
 	}
 	fdnoblock(fd);
@@ -152,7 +150,7 @@ netdial(char *server, int port)
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons(port);
 	if(connect(fd, (struct sockaddr*)&sa, sizeof sa) < 0 && errno != EINPROGRESS){
-		perror("connect");
+		fprint(2, "connect:%r\n");
 		close(fd);
 		return -1;
 	}
@@ -161,7 +159,7 @@ netdial(char *server, int port)
 	if(getpeername(fd, (struct sockaddr*)&sa, &sn) != -1){
 		return fd;
 	}
-	perror("getpeername");
+	fprint(2, "fail to connect:%r\n");
 	sn = sizeof sa;
 	getsockopt(fd, SOL_SOCKET, SO_ERROR, (void*)&n, &sn);
 	if(n == 0)
