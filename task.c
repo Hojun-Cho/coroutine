@@ -186,7 +186,8 @@ taskscheduler(void)
     contextswitch(taskschedcontext, t->uc);
     taskrunning = nil; /* ready for next task */
     if(t->exiting){
-      taskcount--;
+		if(t->system == 0)
+			taskcount--;
       i = t->alltaskslot;
       alltask[i] = alltask[--nalltask];
       alltask[i]->alltaskslot = i;
@@ -210,6 +211,8 @@ static void
 taskmainstart(void* v)
 {
   taskmain(taskargc, taskargv);
+  while(taskcount > 0)
+	  taskyield();
   taskexitall(0);
 }
 

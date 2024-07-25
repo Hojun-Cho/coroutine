@@ -44,7 +44,7 @@ fdtask(void *v)
 
    tasksystem();
    for(;;){
-		while(taskyield() > 0)
+		while(taskyield() > 1)
 		   ;
 		errno = 0;
 		if((t = sleeping.head) == nil){
@@ -123,7 +123,9 @@ fdwrite1(int fd, void *buf, int n)
 		fdwait(fd, 'w');
 		m = write(fd, (char*)buf + tot, n - tot);
 		switch (m){
-		case -1: if(errno == EAGAIN) continue;
+		case -1: 
+			if(errno == EAGAIN)
+				continue;
 		case 0: return tot;
 		default: tot += m;
 		}

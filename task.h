@@ -145,4 +145,9 @@ int fdread(int fd, void *buf, int n);
 int fdwrite(int fd, void *buf, int n);
 int fdnoblock(int fd);
 
+/* net */
+int netannounce(char *server,int port);
+int netaccept(int fd, char *server, int *port);
+int netdial(char *server, int port);
+
 #endif
