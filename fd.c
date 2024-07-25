@@ -1,8 +1,8 @@
 #include "taskimpl.h"
+#include "print.h"
 #include <sys/poll.h>
 #include <sys/time.h>
 #include <string.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -55,7 +55,7 @@ fdtask(void *v)
 		if(poll(pollfd, npollfd, ms) < 0){
 			if(errno == EINTR)
 				continue;
-		   fprintf(stderr, "poll: %s\n", strerror(errno));
+		   fprint(2, "poll: %r\n");
 		   taskexitall(0);
 		}
 		for(int i = 0; i < npollfd; ++i){
@@ -86,7 +86,7 @@ fdwait(int fd, int rw)
 		taskcreate(fdtask, 0, 32768);
 	}
 	if(npollfd >= MAXFD){
-		fprintf(stderr, "Too many poll file descriptors");
+		fprint(2, "Too many poll file descriptors");
 		exit(1);
 	}
 	bits = 0;

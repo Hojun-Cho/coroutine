@@ -1,5 +1,5 @@
 #include "taskimpl.h"
-#include <stdio.h>
+#include "print.h"
 
 int taskcount;
 int taskidgen;
@@ -32,7 +32,7 @@ taskinfo(int s)
       extra = " (ready)";
     else
       extra = "";
-    printf("%s\n", extra);
+    print("%s\n", extra);
   }
 }
 
