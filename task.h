@@ -137,4 +137,12 @@ channbsendul(Channel* c, unsigned long v);
 int
 channbrecvul(Channel* c, unsigned long v);
 
+/* fd */
+void fdwait(int fd, int rw);
+int fdread1(int fd, void *buf, int n);
+int fdwrite1(int fd, void *buf, int n);
+int fdread(int fd, void *buf, int n);
+int fdwrite(int fd, void *buf, int n);
+int fdnoblock(int fd);
+
 #endif
