@@ -44,7 +44,7 @@ fdtask(void *v)
 
    tasksystem();
    for(;;){
-		while(taskyield() > 1)
+		while(taskyield() > 0)
 		   ;
 		errno = 0;
 		if((t = sleeping.head) == nil){

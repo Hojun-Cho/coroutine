@@ -211,9 +211,7 @@ static void
 taskmainstart(void* v)
 {
   taskmain(taskargc, taskargv);
-  while(taskcount > 0)
-	  taskyield();
-  taskexitall(0);
+  taskexit(0);
 }
 
 int
