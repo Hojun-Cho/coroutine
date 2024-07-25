@@ -1,4 +1,5 @@
 #include "taskimpl.h"
+#include "print.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -116,12 +117,10 @@ netaccept(int fd, char *server, int *port)
 		perror("accept");
 		return -1;
 	}
-	/*
-	 * need sprint
-	 *if(server){
-	 *    ip = (uchar*)&sa.sin_addr;
-	 *}
-	 */
+	if(server){
+		ip = (uchar*)&sa.sin_addr;
+		snprint(server, 16, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+	}
 	if(port){
 		*port = ntohs(sa.sin_port);
 	}
